@@ -8,8 +8,8 @@ import javax.swing.*;
 import static java.lang.Math.*;
 import static java.util.stream.Collectors.toList;
 
+//defining class to store tile information
 public class AmmannFractal extends JPanel {
-    // ignores missing hash code
     class Tile {
         double x, y, angle, size, sign;
         Type type;
@@ -43,37 +43,26 @@ public class AmmannFractal extends JPanel {
     List<Tile> tiles = new ArrayList<>();
 
 
-    // final destination ----------------------------------------- for tile list
+//program activation, get desire Ammann Chair fractal by modifying n,k,a,b variables
+//n=generation, k=k-substitution, a=#small tiles removed, b=#big tile remove
     public AmmannFractal() {
+        int n=3, k=5, a=0, b=1;
         int w = 700, h = 450;
         setPreferredSize(new Dimension(w, h));
         setBackground(Color.white);
 
-        tiles = nsub(setupPrototiles(w, h), 2,10,  31,44);//n,a,b-sub
+        tiles = nsub(setupPrototiles(w, h), n, k, a, b);
     }
-// --------------------------------------------------------------
 
-
-
-
+//Set up initial tile
     List<Tile> setupPrototiles(int w, int h) { //initial tile - 1 small tile
         List<Tile> proto = new ArrayList<>();
-
-        // sun, T=36 degree
-        //for (double a = PI / 2 + T; a < 3 * PI; a += 2 * T) //generating starting condition
         proto.add(new Tile(Type.Small, w / 2, h / 2, 0, w / 2.5, -1)); //a = starting angle,  Type.Small = using which tile
-
-
         return proto;
     }
 
-
-
-
-
-
-
-    // gen n tile list - for n-sub
+    
+//Tile arrangement list of k-substitution algorithm
     List<Tile> deflateTiles(List<Tile> tls, int generation) { //input initial tile, n for gen
         if (generation <= 0)
             return tls;
@@ -106,7 +95,7 @@ public class AmmannFractal extends JPanel {
     }
 
 
-//remove tiles from gen n
+//remove tiles from k-subtitution
     List<Tile> RemoveTiles(List<Tile> tls, int a, int b) { //input gen n tile list, int a, int b
 
 
@@ -118,15 +107,11 @@ public class AmmannFractal extends JPanel {
                     next.add(new Tile(Type.Small, tile.x, tile.y, tile.angle, tile.size, tile.sign));
                 }
                 else {a=a-1;}
-
-
             } else {
                 if (b==0) {
                     next.add(new Tile(Type.Big, tile.x, tile.y, tile.angle, tile.size, tile.sign));
                 }
                 else {b=b-1;}
-
-
             }
         }
 
@@ -138,9 +123,9 @@ public class AmmannFractal extends JPanel {
 
 
 
-
-    List<Tile> nsub(List<Tile> tls, int generation, int n,int a,int b) { //input initial tile, n for gen
-        if (generation <= 0)
+//Final tile arrangement: run k-sub for n generations
+    List<Tile> nsub(List<Tile> tls, int n, int k,int a,int b) { //input initial tile, k for gen
+        if (n <= 0)
             return tls;
 
         List<Tile> next = new ArrayList<>();
@@ -150,10 +135,10 @@ public class AmmannFractal extends JPanel {
             temporarylist.add(tile);
 
             if (tile.type == Type.Small) {
-                next.addAll(RemoveTiles(deflateTiles(temporarylist, n), a,b)); // remove(gen n(tile, n), a,b)
+                next.addAll(RemoveTiles(deflateTiles(temporarylist, k), a,b));
 
             } else{
-                next.addAll(deflateTiles(RemoveTiles(deflateTiles(temporarylist, n-1), a,b),1));
+                next.addAll(deflateTiles(RemoveTiles(deflateTiles(temporarylist, k-1), a,b),1));
 
             }
         }
@@ -161,21 +146,12 @@ public class AmmannFractal extends JPanel {
         // remove duplicates
         tls = next.stream().distinct().collect(toList());
 
-        return nsub(tls, generation - 1, n,a,b);
+        return nsub(tls, n - 1, k,a,b);
     }
 
 
 
-
-
-
-
-
-
-
-
-
-
+// draw tiles
     void drawTiles(Graphics2D g) {
         double[] dist = {G, sqrt(G*G+G), sqrt((G+1)*(G+1)+G), sqrt((G+1)*(G+1)+(G+2*(G*G)+G*G*G)), Math.pow(G,2.5)};
         double[] sz = {1, 1/sqrt(G)};
@@ -185,29 +161,30 @@ public class AmmannFractal extends JPanel {
         int w = 700, h = 450;
         Initial_tile = setupPrototiles(w, h);
 
-        for (AmmannFractal.Tile tile : Initial_tile) { //for loop of all tiles existing
+        //draw boundary
+        for (AmmannFractal.Tile tile : Initial_tile) { 
             Path2D path = new Path2D.Double();
             path.moveTo(tile.x, tile.y);
 
-            int ord = tile.type.ordinal(); //ord =0 if type is kite
+            int ord = tile.type.ordinal();
             for (int i = 0; i < 5; i++) {
-                double x = tile.x + dist[i] * sz[ord] * tile.size * cos(tile.sign * ang[i]+tile.angle); //important to calculate which 3 other points
+                double x = tile.x + dist[i] * sz[ord] * tile.size * cos(tile.sign * ang[i]+tile.angle);
                 double y = tile.y - dist[i] * sz[ord] * tile.size * sin(tile.sign * ang[i]+tile.angle);
                 path.lineTo(x, y);
             }
             path.closePath();
             g.setColor(Color.darkGray);
-            g.draw(path); //colour of boundary
+            g.draw(path);
         }
 
-
+        //draw tiles from the list
         for (AmmannFractal.Tile tile : tiles) { //for loop of all tiles existing
             Path2D path = new Path2D.Double();
             path.moveTo(tile.x, tile.y);
 
-            int ord = tile.type.ordinal(); //ord =0 if type is kite
+            int ord = tile.type.ordinal();
             for (int i = 0; i < 5; i++) {
-                double x = tile.x + dist[i] * sz[ord] * tile.size * cos(tile.sign * ang[i]+tile.angle); //important to calculate which 3 other points
+                double x = tile.x + dist[i] * sz[ord] * tile.size * cos(tile.sign * ang[i]+tile.angle); 
                 double y = tile.y - dist[i] * sz[ord] * tile.size * sin(tile.sign * ang[i]+tile.angle);
                 path.lineTo(x, y);
             }
@@ -215,7 +192,7 @@ public class AmmannFractal extends JPanel {
             g.setColor(ord == 0 ? Color.orange : Color.yellow);
             g.fill(path); //colour of inside
             g.setColor(Color.darkGray);
-            g.draw(path); //colour of boundary
+            g.draw(path);
         }
     }
 
